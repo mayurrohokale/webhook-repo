@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Activity Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background-color: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            background-color: #f9f9f9;
+            padding: 15px 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            min-width: 120px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 250px;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .events-panel {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-header h2 {
+            font-size: 1.2rem;
+            color: #333;
+        }
+
+        .last-update {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .event-list {
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .event-item {
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            background-color: #fafafa;
+        }
+
+        .event-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        .event-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            gap: 10px;
+        }
+
+        .event-author {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .event-action {
+            background-color: #e8e8e8;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            color: #555;
+        }
+
+        .event-message {
+            font-size: 0.95rem;
+            color: #555;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .event-branch {
+            background-color: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            margin: 0 4px;
+            color: #333;
+            border: 1px solid #e0e0e0;
+        }
+
+        .event-timestamp {
+            font-size: 0.8rem;
+            color: #999;
+        }
+
+        .request-id {
+            font-size: 0.75rem;
+            color: #999;
+            font-family: monospace;
+            margin-bottom: 8px;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .info-panel {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+        }
+
+        .info-panel h3 {
+            font-size: 1rem;
+            color: #333;
+            margin-bottom: 12px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 8px;
+        }
+
+        .info-item {
+            padding: 8px 0;
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        .info-item:not(:last-child) {
+            border-bottom: 1px solid #f0f0f0;
+            margin-bottom: 8px;
+        }
+
+        .stats-panel {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+        }
+
+        .stats-panel h3 {
+            font-size: 1rem;
+            color: #333;
+            margin-bottom: 12px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 8px;
+        }
+
+        .stat-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .stat-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+        }
+
+        .stat-bar-label {
+            width: 80px;
+            color: #555;
+        }
+
+        .stat-bar-value {
+            flex: 1;
+            height: 20px;
+            background-color: #f0f0f0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .stat-bar-fill {
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+
+        .push-fill {
+            background-color: #4caf50;
+        }
+
+        .pr-fill {
+            background-color: #2196f3;
+        }
+
+        .merge-fill {
+            background-color: #9c27b0;
+        }
+
+        .stat-count {
+            width: 35px;
+            text-align: right;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .footer {
+            text-align: center;
+            color: #999;
+            margin-top: 20px;
+            padding: 15px;
+            font-size: 0.85rem;
+        }
+
+        .error-message {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            border: 1px solid #ef5350;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>GitHub Activity Dashboard</h1>
+            <p>Real-time monitoring of repository activities</p>
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalEvents">0</div>
+                    <div class="stat-label">Total Events</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="pushCount">0</div>
+                    <div class="stat-label">Pushes</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="prCount">0</div>
+                    <div class="stat-label">Pull Requests</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="mergeCount">0</div>
+                    <div class="stat-label">Merges</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="dashboard">
+            <main class="events-panel">
+                <div class="panel-header">
+                    <h2>Recent Activities</h2>
+                    <div class="last-update">
+                        Last updated: <span id="lastUpdate">Just now</span>
+                    </div>
+                </div>
+                <div class="event-list" id="eventList">
+                    <div class="loading">
+                        <p>Loading activities...</p>
+                    </div>
+                </div>
+            </main>
+
+            <aside class="sidebar">
+
+                <div class="stats-panel">
+                    <h3>Activity Distribution</h3>
+                    <div class="stat-chart">
+                        <div class="stat-bar">
+                            <span class="stat-bar-label">Push</span>
+                            <div class="stat-bar-value">
+                                <div class="stat-bar-fill push-fill" id="pushBar" style="width: 0%"></div>
+                            </div>
+                            <span class="stat-count" id="pushCountChart">0</span>
+                        </div>
+                        <div class="stat-bar">
+                            <span class="stat-bar-label">Pull Request</span>
+                            <div class="stat-bar-value">
+                                <div class="stat-bar-fill pr-fill" id="prBar" style="width: 0%"></div>
+                            </div>
+                            <span class="stat-count" id="prCountChart">0</span>
+                        </div>
+                        <div class="stat-bar">
+                            <span class="stat-bar-label">Merge</span>
+                            <div class="stat-bar-value">
+                                <div class="stat-bar-fill merge-fill" id="mergeBar" style="width: 0%"></div>
+                            </div>
+                            <span class="stat-count" id="mergeCountChart">0</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <footer class="footer">
+            <p>GitHub Activity Dashboard | Auto-refreshing every 15 seconds</p>
+        </footer>
+    </div>
+
+    <script>
+        const API_URL = '/api/events';
+        const REFRESH_INTERVAL = 15000;
+        let eventsData = [];
+
+        const eventList = document.getElementById('eventList');
+        const lastUpdateEl = document.getElementById('lastUpdate');
+        const totalEventsEl = document.getElementById('totalEvents');
+        const pushCountEl = document.getElementById('pushCount');
+        const prCountEl = document.getElementById('prCount');
+        const mergeCountEl = document.getElementById('mergeCount');
+
+        const pushBar = document.getElementById('pushBar');
+        const prBar = document.getElementById('prBar');
+        const mergeBar = document.getElementById('mergeBar');
+        const pushCountChart = document.getElementById('pushCountChart');
+        const prCountChart = document.getElementById('prCountChart');
+        const mergeCountChart = document.getElementById('mergeCountChart');
+
+        // Format timestamp
+        function formatTimestampCustom(timestamp) {
+            const date = new Date(timestamp);
+            
+            const day = date.getDate();
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                              'July', 'August', 'September', 'October', 'November', 'December'];
+            const month = monthNames[date.getMonth()];
+            const year = date.getFullYear();
+            
+            // Get ordinal suffix (st, nd, rd, th)
+            const getDaySuffix = (d) => {
+                if (d > 3 && d < 21) return 'th';
+                switch (d % 10) {
+                    case 1: return 'st';
+                    case 2: return 'nd';
+                    case 3: return 'rd';
+                    default: return 'th';
+                }
+            };
+            
+            const hours = date.getHours();
+            const minutes = date.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const displayHours = hours % 12 || 12;
+            const displayMinutes = minutes.toString().padStart(2, '0');
+            
+            return `${day}${getDaySuffix(day)} ${month} ${year} - ${displayHours}:${displayMinutes} ${ampm} UTC`;
+        }
+
+        function createEventHTML(event, index) {
+            const actionLabels = {
+                'PUSH': 'Push',
+                'PULL_REQUEST': 'Pull Request',
+                'MERGE': 'Merge'
+            };
+            
+            const actionLabel = actionLabels[event.action] || event.action;
+            const timestamp = formatTimestampCustom(event.timestamp);
+            
+            return `
+                <div class="event-item">
+                    <div class="request-id">#${event.request_id}</div>
+                    <div class="event-header">
+                        <div class="event-author">${event.author}</div>
+                        <div class="event-action">${actionLabel}</div>
+                    </div>
+                    <div class="event-message">
+                        ${formatEventMessage(event, timestamp)}
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatEventMessage(event, timestamp) {
+            const author = `"${event.author}"`;
+            const fromBranch = event.from_branch ? `"${event.from_branch}"` : '';
+            const toBranch = event.to_branch ? `"${event.to_branch}"` : '';
+            
+            switch(event.action) {
+                case 'PUSH':
+                    return `${author} pushed to ${toBranch} on ${timestamp}`;
+                case 'PULL_REQUEST':
+                    return `${author} submitted a pull request from ${fromBranch} to ${toBranch} on ${timestamp}`;
+                case 'MERGE':
+                    return `${author} merged branch ${fromBranch} to ${toBranch} on ${timestamp}`;
+                default:
+                    return `${author} performed ${event.action} on ${timestamp}`;
+            }
+        }
+
+        function updateStatistics(events) {
+            const pushEvents = events.filter(e => e.action === 'PUSH');
+            const prEvents = events.filter(e => e.action === 'PULL_REQUEST');
+            const mergeEvents = events.filter(e => e.action === 'MERGE');
+            
+            totalEventsEl.textContent = events.length;
+            pushCountEl.textContent = pushEvents.length;
+            prCountEl.textContent = prEvents.length;
+            mergeCountEl.textContent = mergeEvents.length;
+            
+            const total = events.length || 1;
+            const pushPercent = Math.round((pushEvents.length / total) * 100);
+            const prPercent = Math.round((prEvents.length / total) * 100);
+            const mergePercent = Math.round((mergeEvents.length / total) * 100);
+            
+            pushBar.style.width = `${pushPercent}%`;
+            prBar.style.width = `${prPercent}%`;
+            mergeBar.style.width = `${mergePercent}%`;
+            
+            pushCountChart.textContent = pushEvents.length;
+            prCountChart.textContent = prEvents.length;
+            mergeCountChart.textContent = mergeEvents.length;
+        }
+
+        function updateEventList(events) {
+            if (events.length === 0) {
+                eventList.innerHTML = `
+                    <div class="empty-state">
+                        <p>No activities yet. Try: git push, create a PR, or merge a branch</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            events.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            const eventsHTML = events.map((event, index) => createEventHTML(event, index)).join('');
+            eventList.innerHTML = eventsHTML;
+            
+            const now = new Date();
+            lastUpdateEl.textContent = now.toLocaleTimeString();
+            
+            updateStatistics(events);
+        }
+
+        async function fetchEvents() {
+            try {
+                if (eventsData.length === 0) {
+                    eventList.innerHTML = '<div class="loading"><p>Loading activities...</p></div>';
+                }
+                
+                const response = await fetch(`${API_URL}?limit=50`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                
+                const events = await response.json();
+                
+                if (JSON.stringify(events) !== JSON.stringify(eventsData)) {
+                    eventsData = events;
+                    updateEventList(events);
+                }
+                
+            } catch (error) {
+                console.error('Error fetching events:', error);
+                eventList.innerHTML = `
+                    <div class="error-message">
+                        <p>Failed to load events. Retrying in 15 seconds...</p>
+                    </div>
+                `;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchEvents();
+            setInterval(fetchEvents, REFRESH_INTERVAL);
+        });
+    </script>
+</body>
+</html>
